@@ -115,9 +115,14 @@ int main(void)
   GPIOA->MODER |= (1<<13);
   GPIOA->AFR[0] |= (1<<25);
 
+  //Set GPIOC9 to TIM output
+  //GPIOC->MODER |= (1<<19);
+  //GPIOC->AFR[1] |= (1<<4);
+
   //Set GPIOC9 to GPIO output
-  GPIOC->MODER |= (1<<19);
-  GPIOC->AFR[1] |= (1<<4);
+  GPIOC->MODER &= ~(1<<19);
+  GPIOC->MODER |= (1<<18);
+
 
   while (1)
   {
@@ -194,7 +199,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = period_data;
+  htim3.Init.Period = 100;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -254,7 +259,7 @@ static void MX_TIM8_Init(void)
   htim8.Instance = TIM8;
   htim8.Init.Prescaler = 0;
   htim8.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim8.Init.Period = period_clk;
+  htim8.Init.Period = 100;
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim8.Init.RepetitionCounter = 0;
   htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
