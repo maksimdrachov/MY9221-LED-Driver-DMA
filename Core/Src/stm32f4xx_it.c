@@ -42,6 +42,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+extern int InputCounter;
+extern uint32_t w[];
 
 /* USER CODE END PV */
 
