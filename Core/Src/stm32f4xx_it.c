@@ -58,6 +58,7 @@ extern uint32_t w[];
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern DMA_HandleTypeDef hdma_tim8_up;
 extern TIM_HandleTypeDef htim8;
 /* USER CODE BEGIN EV */
 
@@ -210,7 +211,8 @@ void TIM8_UP_TIM13_IRQHandler(void)
   __HAL_TIM_CLEAR_IT(&htim8,TIM_IT_UPDATE);
 
 
-  if (InputCounter == 1)
+  // Prototype 1
+  /*if (InputCounter == 1)
   {
 	  GPIOC->BSRR = (1<<9);
 	  InputCounter = 0;
@@ -219,7 +221,12 @@ void TIM8_UP_TIM13_IRQHandler(void)
   {
 	  GPIOC->BSRR = (1<<25);
 	  InputCounter++;
-  }
+  }*/
+
+  DMA2_Stream7->NDTR = 0x1;
+  DMA2_Stream7->CR |= 0b1;
+  //GPIOE->BSRR |= 0b1;
+  //GPIOE->ODR |= 0b1;
 
 
   /* USER CODE END TIM8_UP_TIM13_IRQn 0 */
@@ -227,6 +234,20 @@ void TIM8_UP_TIM13_IRQHandler(void)
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 1 */
 
   /* USER CODE END TIM8_UP_TIM13_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA2 stream1 global interrupt.
+  */
+void DMA2_Stream1_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream1_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream1_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_tim8_up);
+  /* USER CODE BEGIN DMA2_Stream1_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream1_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

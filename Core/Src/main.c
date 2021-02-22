@@ -32,8 +32,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define period_data 100
-#define period_clk 100
+#define period_data 50
+#define period_clk 50
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,6 +44,7 @@
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim8;
+DMA_HandleTypeDef hdma_tim8_up;
 
 /* USER CODE BEGIN PV */
 uint32_t w[] = {
@@ -51,11 +52,14 @@ uint32_t w[] = {
 		  0xffffffff, 0x00000000, 0xffffffff, 0x00000000};
 int InputCounter = {0};
 
+uint32_t w2[] = {0x0000ffff, 0xffff0000}; //Resets and sets each port
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM8_Init(void);
 /* USER CODE BEGIN PFP */
@@ -95,21 +99,17 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_TIM3_Init();
   MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
-  //HAL_TIM_Base_Start_IT(&htim1);
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-  HAL_TIM_Base_Start_IT(&htim3);
-  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
-  HAL_TIM_Base_Start_IT(&htim8);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  htim3.Instance->CCR1 = (int)(period_data/2);
-  htim8.Instance->CCR4 = (int)(period_clk/2);
+  htim3.Instance->CCR1 = (int)(period_clk/2);
+  htim8.Instance->CCR4 = (int)(period_data/2);
 
   // Set GPIOA6 to TIM output
   GPIOA->MODER |= (1<<13);
@@ -122,6 +122,21 @@ int main(void)
   //Set GPIOC9 to GPIO output
   GPIOC->MODER &= ~(1<<19);
   GPIOC->MODER |= (1<<18);
+
+  //Set DMA
+  DMA2_Stream7->CR |= (0b111 << 25); // Channel 7 selected
+  DMA2_Stream7->CR |= (0b10 << 13);	 // word (32-bit) selected (memory)
+  DMA2_Stream7->CR |= (0b10 << 11);  // word (32-bit) selected (peripheral)
+  DMA2_Stream7->CR |= (0b10 << 6);	 // Data transfer direction
+
+  DMA2_Stream7->PAR = (uint32_t)w2;	 // Set peripheral address to GPIOE->BSRR
+  DMA2_Stream7->M0AR = 0x40021018;			 // Set memory address to start w2 array
+
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+  HAL_TIM_Base_Start_IT(&htim3);
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
+  HAL_TIM_Base_Start_IT(&htim8);
+
 
 
   while (1)
@@ -311,16 +326,53 @@ static void MX_TIM8_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
+                          |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9
+                          |GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13
+                          |GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_0|GPIO_PIN_1, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : PE2 PE3 PE4 PE5
+                           PE6 PE7 PE8 PE9
+                           PE10 PE11 PE12 PE13
+                           PE14 PE15 PE0 PE1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
+                          |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9
+                          |GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13
+                          |GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_0|GPIO_PIN_1;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
 }
 
