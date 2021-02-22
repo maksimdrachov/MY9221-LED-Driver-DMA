@@ -44,7 +44,6 @@
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim8;
-DMA_HandleTypeDef hdma_tim8_up;
 
 DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 /* USER CODE BEGIN PV */
@@ -160,6 +159,7 @@ int main(void)
   //regs->IFCR = 0x3FU << DMA2_Stream1->StreamIndex;
   //DMA2_Stream1->Instance->CR  |= DMA_IT_TC | DMA_IT_TE | DMA_IT_DME;
   //__HAL_DMA_ENABLE(DMA2_Stream1);
+  TIM8->CR2 |= (0b1 << 3);
   DMA2_Stream1->CR |= (0b1);
 
 
@@ -361,8 +361,8 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* Configure DMA request hdma_memtomem_dma2_stream0 on DMA2_Stream0 */
-  hdma_memtomem_dma2_stream0.Instance = DMA2_Stream1;
-  hdma_memtomem_dma2_stream0.Init.Channel = DMA_CHANNEL_7;
+  hdma_memtomem_dma2_stream0.Instance = DMA2_Stream0;
+  hdma_memtomem_dma2_stream0.Init.Channel = DMA_CHANNEL_0;
   hdma_memtomem_dma2_stream0.Init.Direction = DMA_MEMORY_TO_MEMORY;
   hdma_memtomem_dma2_stream0.Init.PeriphInc = DMA_PINC_DISABLE;
   hdma_memtomem_dma2_stream0.Init.MemInc = DMA_MINC_DISABLE;
@@ -378,11 +378,6 @@ static void MX_DMA_Init(void)
   {
     Error_Handler( );
   }
-
-  /* DMA interrupt init */
-  /* DMA2_Stream1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
 
 }
 
