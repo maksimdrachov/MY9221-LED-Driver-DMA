@@ -60,7 +60,7 @@ extern uint32_t w2;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern DMA_HandleTypeDef hdma_tim8_up;
+extern DMA_HandleTypeDef hdma_memtomem_dma2_stream1;
 extern TIM_HandleTypeDef htim8;
 /* USER CODE BEGIN EV */
 
@@ -214,7 +214,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
 
 
   // Prototype 1
-  /*if (InputCounter == 1)
+  if (InputCounter == 1)
   {
 	  GPIOC->BSRR = (1<<9);
 	  InputCounter = 0;
@@ -223,10 +223,11 @@ void TIM8_UP_TIM13_IRQHandler(void)
   {
 	  GPIOC->BSRR = (1<<25);
 	  InputCounter++;
-  }*/
+  }
 
   // Prototype 2
-  /*DMA2_Stream1->CR &= ~(0b1);		 // Disable stream before config
+  /*
+  DMA2_Stream1->CR &= ~(0b1);		 // Disable stream before config
   if (InputCounter == 1)
   {
 	  DMA2_Stream1->PAR = (uint32_t)&w2;
@@ -238,13 +239,14 @@ void TIM8_UP_TIM13_IRQHandler(void)
 	  InputCounter++;
   }
   DMA2_Stream1->NDTR = 0x1;
-  DMA2_Stream1->CR |= 0b1;*/
+  DMA2_Stream1->CR |= 0b1;
+  */
   //GPIOE->BSRR |= 0b1;
   //GPIOE->ODR |= 0b1;
 
 
   /* USER CODE END TIM8_UP_TIM13_IRQn 0 */
-  //HAL_TIM_IRQHandler(&htim8);
+  HAL_TIM_IRQHandler(&htim8);
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 1 */
 
   /* USER CODE END TIM8_UP_TIM13_IRQn 1 */
@@ -258,7 +260,7 @@ void DMA2_Stream1_IRQHandler(void)
   /* USER CODE BEGIN DMA2_Stream1_IRQn 0 */
 
   /* USER CODE END DMA2_Stream1_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_tim8_up);
+  HAL_DMA_IRQHandler(&hdma_memtomem_dma2_stream1);
   /* USER CODE BEGIN DMA2_Stream1_IRQn 1 */
 
   /* USER CODE END DMA2_Stream1_IRQn 1 */

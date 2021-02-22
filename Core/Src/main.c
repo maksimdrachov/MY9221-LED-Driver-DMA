@@ -44,8 +44,8 @@
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim8;
-DMA_HandleTypeDef hdma_tim8_up;
 
+DMA_HandleTypeDef hdma_memtomem_dma2_stream1;
 /* USER CODE BEGIN PV */
 uint32_t w[] = {
 		  0xffffffff, 0x00000000, 0xffffffff, 0x00000000,
@@ -125,6 +125,7 @@ int main(void)
   GPIOC->MODER |= (1<<18);
 
   //Set DMA
+  /*
   DMA2_Stream1->CR &= ~(0b1);		 // Disable stream before config
   DMA2_Stream1->NDTR = 0x1;			 // 1 data item to be transmitted
   DMA2_Stream1->CR |= (0b111 << 25); // Channel 7 selected
@@ -143,6 +144,7 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
   HAL_TIM_Base_Start_IT(&htim8);
+  */
 
 
 
@@ -334,12 +336,33 @@ static void MX_TIM8_Init(void)
 
 /**
   * Enable DMA controller clock
+  * Configure DMA for memory to memory transfers
+  *   hdma_memtomem_dma2_stream1
   */
 static void MX_DMA_Init(void)
 {
 
   /* DMA controller clock enable */
   __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* Configure DMA request hdma_memtomem_dma2_stream1 on DMA2_Stream1 */
+  hdma_memtomem_dma2_stream1.Instance = DMA2_Stream1;
+  hdma_memtomem_dma2_stream1.Init.Channel = DMA_CHANNEL_0;
+  hdma_memtomem_dma2_stream1.Init.Direction = DMA_MEMORY_TO_MEMORY;
+  hdma_memtomem_dma2_stream1.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_memtomem_dma2_stream1.Init.MemInc = DMA_MINC_DISABLE;
+  hdma_memtomem_dma2_stream1.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+  hdma_memtomem_dma2_stream1.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+  hdma_memtomem_dma2_stream1.Init.Mode = DMA_NORMAL;
+  hdma_memtomem_dma2_stream1.Init.Priority = DMA_PRIORITY_LOW;
+  hdma_memtomem_dma2_stream1.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+  hdma_memtomem_dma2_stream1.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_1QUARTERFULL;
+  hdma_memtomem_dma2_stream1.Init.MemBurst = DMA_MBURST_SINGLE;
+  hdma_memtomem_dma2_stream1.Init.PeriphBurst = DMA_PBURST_SINGLE;
+  if (HAL_DMA_Init(&hdma_memtomem_dma2_stream1) != HAL_OK)
+  {
+    Error_Handler( );
+  }
 
   /* DMA interrupt init */
   /* DMA2_Stream1_IRQn interrupt configuration */
