@@ -44,8 +44,9 @@
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim8;
+DMA_HandleTypeDef hdma_tim8_up;
 
-DMA_HandleTypeDef hdma_memtomem_dma2_stream1;
+DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 /* USER CODE BEGIN PV */
 uint32_t w[] = {
 		  0xffffffff, 0x00000000, 0xffffffff, 0x00000000,
@@ -138,14 +139,28 @@ int main(void)
 
   DMA2_Stream1->FCR |= (0b1 << 2);		// Disable direct mode
   DMA2_Stream1->CR |= (0b1);		 // Enable stream before config
-  //DMA_Cmd(DMA2_Channel7, ENABLE);
+  //DMA_Cmd(DMA2_Channel7, ENABLE); */
 
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
   HAL_TIM_Base_Start_IT(&htim8);
-  */
 
+  DMA2_Stream1->CR |= (0b111 << 25); // Channel 7 selected
+  DMA2_Stream1->NDTR = 0x1;			 // 1 data item to be transmitted
+  DMA2_Stream1->FCR |= (0b1 << 2);	 // Disable direct mode
+
+  //HAL_DMA_Start_IT(DMA2_Stream1, (uint32_t)&w2, 0x40021018, 32);
+  //DMA2_Stream1->State = HAL_DMA_STATE_BUSY;
+  //DMA2_Stream1->ErrorCode = HAL_DMA_ERROR_NONE;
+  //DMA_SetConfig(DMA2_Stream1, (uint32_t)&w2, 0x40021018, 32);
+  DMA2_Stream1->PAR = (uint32_t)&w2;	 // Set peripheral address to start w2 array
+  DMA2_Stream1->M0AR = 0x40021018;			 // Set memory address to GPIOE->BSRR
+  DMA2_Stream1->NDTR = 32;
+  //regs->IFCR = 0x3FU << DMA2_Stream1->StreamIndex;
+  //DMA2_Stream1->Instance->CR  |= DMA_IT_TC | DMA_IT_TE | DMA_IT_DME;
+  //__HAL_DMA_ENABLE(DMA2_Stream1);
+  DMA2_Stream1->CR |= (0b1);
 
 
   while (1)
@@ -337,7 +352,7 @@ static void MX_TIM8_Init(void)
 /**
   * Enable DMA controller clock
   * Configure DMA for memory to memory transfers
-  *   hdma_memtomem_dma2_stream1
+  *   hdma_memtomem_dma2_stream0
   */
 static void MX_DMA_Init(void)
 {
@@ -345,21 +360,21 @@ static void MX_DMA_Init(void)
   /* DMA controller clock enable */
   __HAL_RCC_DMA2_CLK_ENABLE();
 
-  /* Configure DMA request hdma_memtomem_dma2_stream1 on DMA2_Stream1 */
-  hdma_memtomem_dma2_stream1.Instance = DMA2_Stream1;
-  hdma_memtomem_dma2_stream1.Init.Channel = DMA_CHANNEL_0;
-  hdma_memtomem_dma2_stream1.Init.Direction = DMA_MEMORY_TO_MEMORY;
-  hdma_memtomem_dma2_stream1.Init.PeriphInc = DMA_PINC_DISABLE;
-  hdma_memtomem_dma2_stream1.Init.MemInc = DMA_MINC_DISABLE;
-  hdma_memtomem_dma2_stream1.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-  hdma_memtomem_dma2_stream1.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
-  hdma_memtomem_dma2_stream1.Init.Mode = DMA_NORMAL;
-  hdma_memtomem_dma2_stream1.Init.Priority = DMA_PRIORITY_LOW;
-  hdma_memtomem_dma2_stream1.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
-  hdma_memtomem_dma2_stream1.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_1QUARTERFULL;
-  hdma_memtomem_dma2_stream1.Init.MemBurst = DMA_MBURST_SINGLE;
-  hdma_memtomem_dma2_stream1.Init.PeriphBurst = DMA_PBURST_SINGLE;
-  if (HAL_DMA_Init(&hdma_memtomem_dma2_stream1) != HAL_OK)
+  /* Configure DMA request hdma_memtomem_dma2_stream0 on DMA2_Stream0 */
+  hdma_memtomem_dma2_stream0.Instance = DMA2_Stream1;
+  hdma_memtomem_dma2_stream0.Init.Channel = DMA_CHANNEL_7;
+  hdma_memtomem_dma2_stream0.Init.Direction = DMA_MEMORY_TO_MEMORY;
+  hdma_memtomem_dma2_stream0.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_memtomem_dma2_stream0.Init.MemInc = DMA_MINC_DISABLE;
+  hdma_memtomem_dma2_stream0.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+  hdma_memtomem_dma2_stream0.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+  hdma_memtomem_dma2_stream0.Init.Mode = DMA_NORMAL;
+  hdma_memtomem_dma2_stream0.Init.Priority = DMA_PRIORITY_LOW;
+  hdma_memtomem_dma2_stream0.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+  hdma_memtomem_dma2_stream0.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_1QUARTERFULL;
+  hdma_memtomem_dma2_stream0.Init.MemBurst = DMA_MBURST_SINGLE;
+  hdma_memtomem_dma2_stream0.Init.PeriphBurst = DMA_PBURST_SINGLE;
+  if (HAL_DMA_Init(&hdma_memtomem_dma2_stream0) != HAL_OK)
   {
     Error_Handler( );
   }
