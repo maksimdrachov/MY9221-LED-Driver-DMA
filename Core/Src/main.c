@@ -52,7 +52,8 @@ uint32_t w[] = {
 		  0xffffffff, 0x00000000, 0xffffffff, 0x00000000};
 int InputCounter = {0};
 
-uint32_t w2[] = {0x0000ffff, 0xffff0000}; //Resets and sets each port
+uint32_t w1 = 0x0000ffff; //Sets each port
+uint32_t w2 = 0xffff0000; //Resets each port
 
 /* USER CODE END PV */
 
@@ -124,13 +125,19 @@ int main(void)
   GPIOC->MODER |= (1<<18);
 
   //Set DMA
-  DMA2_Stream7->CR |= (0b111 << 25); // Channel 7 selected
-  DMA2_Stream7->CR |= (0b10 << 13);	 // word (32-bit) selected (memory)
-  DMA2_Stream7->CR |= (0b10 << 11);  // word (32-bit) selected (peripheral)
-  DMA2_Stream7->CR |= (0b10 << 6);	 // Data transfer direction
+  DMA2_Stream1->CR &= ~(0b1);		 // Disable stream before config
+  DMA2_Stream1->NDTR = 0x1;			 // 1 data item to be transmitted
+  DMA2_Stream1->CR |= (0b111 << 25); // Channel 7 selected
+  DMA2_Stream1->CR |= (0b10 << 13);	 // word (32-bit) selected (memory)
+  DMA2_Stream1->CR |= (0b10 << 11);  // word (32-bit) selected (peripheral)
+  DMA2_Stream1->CR |= (0b10 << 6);	 // Data transfer direction
 
-  DMA2_Stream7->PAR = (uint32_t)w2;	 // Set peripheral address to GPIOE->BSRR
-  DMA2_Stream7->M0AR = 0x40021018;			 // Set memory address to start w2 array
+  DMA2_Stream1->PAR = (uint32_t)&w2;	 // Set peripheral address to start w2 array
+  DMA2_Stream1->M0AR = 0x40021018;			 // Set memory address to GPIOE->BSRR
+
+  DMA2_Stream1->FCR |= (0b1 << 2);		// Disable direct mode
+  DMA2_Stream1->CR |= (0b1);		 // Enable stream before config
+  //DMA_Cmd(DMA2_Channel7, ENABLE);
 
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   HAL_TIM_Base_Start_IT(&htim3);

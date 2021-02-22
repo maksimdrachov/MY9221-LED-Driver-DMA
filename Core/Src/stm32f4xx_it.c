@@ -44,6 +44,8 @@
 /* USER CODE BEGIN PV */
 extern int InputCounter;
 extern uint32_t w[];
+extern uint32_t w1;
+extern uint32_t w2;
 
 /* USER CODE END PV */
 
@@ -223,8 +225,20 @@ void TIM8_UP_TIM13_IRQHandler(void)
 	  InputCounter++;
   }*/
 
-  DMA2_Stream7->NDTR = 0x1;
-  DMA2_Stream7->CR |= 0b1;
+  // Prototype 2
+  /*DMA2_Stream1->CR &= ~(0b1);		 // Disable stream before config
+  if (InputCounter == 1)
+  {
+	  DMA2_Stream1->PAR = (uint32_t)&w2;
+	  InputCounter = 0;
+  }
+  else
+  {
+	  DMA2_Stream1->PAR = (uint32_t)&w1;
+	  InputCounter++;
+  }
+  DMA2_Stream1->NDTR = 0x1;
+  DMA2_Stream1->CR |= 0b1;*/
   //GPIOE->BSRR |= 0b1;
   //GPIOE->ODR |= 0b1;
 
