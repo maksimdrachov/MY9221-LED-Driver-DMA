@@ -32,8 +32,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define period_data 400
-#define period_clk 400
+#define period_data 90
+#define period_clk 90
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -154,7 +154,7 @@ int main(void)
   //regs->IFCR = 0x3FU << DMA2_Stream1->StreamIndex;
   //DMA2_Stream1->Instance->CR  |= DMA_IT_TC | DMA_IT_TE | DMA_IT_DME;
   //__HAL_DMA_ENABLE(DMA2_Stream1);
-  DMA2_Stream1->CR |= (0b1 << 4);
+  //DMA2_Stream1->CR |= (0b1 << 4);
   TIM8->CR2 |= (0b1 << 3);
   DMA2_Stream1->CR |= (0b1);
 
@@ -362,7 +362,7 @@ static void MX_DMA_Init(void)
 
   /* Configure DMA request hdma_memtomem_dma2_stream1 on DMA2_Stream1 */
   hdma_memtomem_dma2_stream1.Instance = DMA2_Stream1;
-  hdma_memtomem_dma2_stream1.Init.Channel = DMA_CHANNEL_0;
+  hdma_memtomem_dma2_stream1.Init.Channel = DMA_CHANNEL_7;
   hdma_memtomem_dma2_stream1.Init.Direction = DMA_MEMORY_TO_MEMORY;
   hdma_memtomem_dma2_stream1.Init.PeriphInc = DMA_PINC_DISABLE;
   hdma_memtomem_dma2_stream1.Init.MemInc = DMA_MINC_DISABLE;

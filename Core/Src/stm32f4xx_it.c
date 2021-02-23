@@ -209,10 +209,14 @@ void SysTick_Handler(void)
 void TIM8_UP_TIM13_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 0 */
-  //__HAL_TIM_CLEAR_IT(&htim8,TIM_IT_UPDATE);
+  // Enable DMA
+  DMA2_Stream1->CR |= (0b1);
+
+  // Clear interupt
+  __HAL_TIM_CLEAR_IT(&htim8,TIM_IT_UPDATE);
 
   /* USER CODE END TIM8_UP_TIM13_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim8);
+  //HAL_TIM_IRQHandler(&htim8);
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 1 */
   if (InputCounter == 1)
   {
@@ -226,12 +230,10 @@ void TIM8_UP_TIM13_IRQHandler(void)
   }
 
   //clear flags
-  DMA2->LIFCR |= (0b1 << 11);
-  DMA2->LIFCR |= (0b1 << 10);
+  DMA2->LIFCR |= (0b11 << 10);
 
+  //set number of data
   DMA2_Stream1->NDTR = 1;
-  DMA2_Stream1->CR |= (0b1 << 4);
-  DMA2_Stream1->CR |= (0b1);
 
   /* USER CODE END TIM8_UP_TIM13_IRQn 1 */
 }
