@@ -229,7 +229,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
   DMA2->LIFCR |= (0b1 << 11);
   DMA2->LIFCR |= (0b1 << 10);
 
-  DMA2_Stream1->NDTR = 32;
+  DMA2_Stream1->NDTR = 1;
   DMA2_Stream1->CR |= (0b1 << 4);
   DMA2_Stream1->CR |= (0b1);
 

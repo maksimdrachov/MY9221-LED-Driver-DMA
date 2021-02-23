@@ -150,7 +150,7 @@ int main(void)
   //DMA_SetConfig(DMA2_Stream1, (uint32_t)&w2, 0x40021018, 32);
   DMA2_Stream1->PAR = (uint32_t)&w1;	 // Set peripheral address to start w2 array
   DMA2_Stream1->M0AR = 0x40021018;			 // Set memory address to GPIOE->BSRR
-  DMA2_Stream1->NDTR = 32;
+  DMA2_Stream1->NDTR = 1;
   //regs->IFCR = 0x3FU << DMA2_Stream1->StreamIndex;
   //DMA2_Stream1->Instance->CR  |= DMA_IT_TC | DMA_IT_TE | DMA_IT_DME;
   //__HAL_DMA_ENABLE(DMA2_Stream1);

@@ -469,9 +469,9 @@ int main(void)
  8000548:	4b17      	ldr	r3, [pc, #92]	; (80005a8 <main+0xe0>)
  800054a:	4a19      	ldr	r2, [pc, #100]	; (80005b0 <main+0xe8>)
  800054c:	60da      	str	r2, [r3, #12]
-  DMA2_Stream1->NDTR = 32;
+  DMA2_Stream1->NDTR = 1;
  800054e:	4b16      	ldr	r3, [pc, #88]	; (80005a8 <main+0xe0>)
- 8000550:	2220      	movs	r2, #32
+ 8000550:	2201      	movs	r2, #1
  8000552:	605a      	str	r2, [r3, #4]
   //regs->IFCR = 0x3FU << DMA2_Stream1->StreamIndex;
   //DMA2_Stream1->Instance->CR  |= DMA_IT_TC | DMA_IT_TE | DMA_IT_DME;
@@ -1715,9 +1715,9 @@ void TIM8_UP_TIM13_IRQHandler(void)
  8000c22:	f443 6380 	orr.w	r3, r3, #1024	; 0x400
  8000c26:	6093      	str	r3, [r2, #8]
 
-  DMA2_Stream1->NDTR = 32;
+  DMA2_Stream1->NDTR = 1;
  8000c28:	4b0a      	ldr	r3, [pc, #40]	; (8000c54 <TIM8_UP_TIM13_IRQHandler+0x74>)
- 8000c2a:	2220      	movs	r2, #32
+ 8000c2a:	2201      	movs	r2, #1
  8000c2c:	605a      	str	r2, [r3, #4]
   DMA2_Stream1->CR |= (0b1 << 4);
  8000c2e:	4b09      	ldr	r3, [pc, #36]	; (8000c54 <TIM8_UP_TIM13_IRQHandler+0x74>)
