@@ -43,6 +43,7 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 extern int InputCounter;
+extern uint32_t InputArray[];
 extern uint32_t w[];
 extern uint32_t w1;
 extern uint32_t w2;
@@ -212,28 +213,23 @@ void TIM8_UP_TIM13_IRQHandler(void)
   // Enable DMA
   DMA2_Stream1->CR |= (0b1);
 
-  // Clear interupt
+  // Clear interrupt
   __HAL_TIM_CLEAR_IT(&htim8,TIM_IT_UPDATE);
 
   /* USER CODE END TIM8_UP_TIM13_IRQn 0 */
   //HAL_TIM_IRQHandler(&htim8);
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 1 */
-  if (InputCounter == 1)
+  if (InputCounter < 208)
   {
-	  DMA2_Stream1->PAR = (uint32_t)&w2; // RESET
-	  InputCounter = 0;
-  }
-  else
-  {
-	  DMA2_Stream1->PAR = (uint32_t)&w1; // SET
+	  DMA2_Stream1->PAR = (uint32_t)&(InputArray[InputCounter]);
 	  InputCounter++;
+	  //clear flags
+	  DMA2->LIFCR |= (0b11 << 10);
+
+	  //set number of data
+	  DMA2_Stream1->NDTR = 1;
+
   }
-
-  //clear flags
-  DMA2->LIFCR |= (0b11 << 10);
-
-  //set number of data
-  DMA2_Stream1->NDTR = 1;
 
   /* USER CODE END TIM8_UP_TIM13_IRQn 1 */
 }

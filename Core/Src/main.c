@@ -22,7 +22,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdbool.h"
+#include <MY9221.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -34,6 +35,55 @@
 /* USER CODE BEGIN PD */
 #define period_data 90
 #define period_clk 90
+
+#define hspd 	0
+/* HSPD: Iout Tr/Tf select
+ * 0: Iout slow mode
+ * 1: Iout fast mode
+*/
+#define bs 		0
+/* BS: Grayscale resolution select
+ * 0: 8-bit grayscale application
+ * 1: 12-bit grayscale application
+ * 2: 14-bit grayscale application
+ * 3: 16-bit grayscale application
+ */
+#define gck		0
+/* GCK: Internal oscillator frequency select
+ * 0: Original frequency (8.6MHz)
+ * 1: Original frequency/2
+ * 2: Original frequency/4
+ * 3: Original frequency/8
+ * 4: Original frequency/16
+ * 5: Original frequency/64
+ * 6: Original frequency/128
+ * 7: Original frequency/256
+*/
+#define sep		0
+/* SEP: Output waveform select
+ * 0: PY-PWM output waveform (similar to traditional waveform)
+ * 1: APDM output waveform
+*/
+#define osc		0
+/* OSC: Grayscale clock source select
+ * 0: Internal oscillator (8.6MHZ) (internal GCK source)
+ * 1: External clock from GCKI pin (external GCK source)
+*/
+#define pol		0
+/* POL: Output polarity select
+ * 0: work as LED driver
+ * 1: work as MY-PWM/APDM generator
+*/
+#define cntset	0
+/* CNTSET: Counter reset select
+ * 0: free running mode
+ * 1: counter reset mode (only usable when osc = '1')
+*/
+#define onest	0
+/* ONEST: One-shot select
+ * 0: frame cycle repeat mode
+ * 1: frame cycle one-shot mode (only usable when cntset = '1')
+*/
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -42,6 +92,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+SPI_HandleTypeDef hspi1;
+
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim8;
 
@@ -50,10 +102,21 @@ DMA_HandleTypeDef hdma_memtomem_dma2_stream1;
 uint32_t w[] = {
 		  0xffffffff, 0x00000000, 0xffffffff, 0x00000000,
 		  0xffffffff, 0x00000000, 0xffffffff, 0x00000000};
-int InputCounter = {0};
+//int InputCounter = {0};
 
 uint32_t w1 = 0x0000ffff; //Sets each port
 uint32_t w2 = 0xffff0000; //Resets each port
+
+uint32_t SetAll = 0x0000ffff; //Sets each port
+uint32_t ResetAll = 0xffff0000; //Resets each port
+
+bool CMDArray[16];
+bool GrayscaleArray[192];
+bool ColorArray[8] = {true,false,false,false,false,false,false,true}; //Make sure length matches selected grayscale!
+//int DataArray[208];
+uint32_t InputArray[208];
+short int InputCounter = 0;
+short int SwitchCounter = 1000;
 
 /* USER CODE END PV */
 
@@ -63,7 +126,9 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM8_Init(void);
+static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
+void uS_Delay(int);
 
 /* USER CODE END PFP */
 
@@ -88,6 +153,9 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+  CMDArray_Init(CMDArray, hspd, bs, gck, sep, osc, pol, cntset, onest);
+  Grayscale_Init(GrayscaleArray, bs, ColorArray);
+  InputArray_Init(InputArray, CMDArray, GrayscaleArray);
 
   /* USER CODE END Init */
 
@@ -103,6 +171,7 @@ int main(void)
   MX_DMA_Init();
   MX_TIM3_Init();
   MX_TIM8_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -115,6 +184,7 @@ int main(void)
   // Set GPIOA6 to TIM output
   GPIOA->MODER |= (1<<13);
   GPIOA->AFR[0] |= (1<<25);
+  //GPIOA->OSPEEDR |= (0b10 << 12);
 
   //Set GPIOC9 to TIM output
   //GPIOC->MODER |= (1<<19);
@@ -168,6 +238,64 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	if (InputCounter == 208)
+	{
+		__disable_irq();
+		HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_1);
+
+		GPIOA->MODER &= ~(1<<13);
+		GPIOA->MODER |= (1<<12);
+		GPIOA->BSRR |= (1<<22);
+
+		GPIOE->BSRR = ResetAll;
+		//HAL_Delay(2);
+		uS_Delay(40000);
+		//Toggle Data lines 4 times;
+		GPIOE->BSRR = SetAll;
+		uS_Delay(100);
+		GPIOE->BSRR = ResetAll;
+		uS_Delay(100);
+		GPIOE->BSRR = SetAll;
+		uS_Delay(100);
+		GPIOE->BSRR = ResetAll;
+		uS_Delay(100);
+		GPIOE->BSRR = SetAll;
+		uS_Delay(100);
+		GPIOE->BSRR = ResetAll;
+		uS_Delay(100);
+		GPIOE->BSRR = SetAll;
+		uS_Delay(100);
+		GPIOE->BSRR = ResetAll;
+		uS_Delay(20000);
+
+		SwitchCounter--;
+		if (SwitchCounter == 0)
+		{
+			if (ColorArray[0] == true)
+			{
+				ColorArray[0] = false;
+				ColorArray[7] = true;
+			}
+			else
+			{
+				ColorArray[0] = true;
+				ColorArray[7] = false;
+			}
+			SwitchCounter = 1000;
+			CMDArray_Init(CMDArray, hspd, bs, gck, sep, osc, pol, cntset, onest);
+			Grayscale_Init(GrayscaleArray, bs, ColorArray);
+			InputArray_Init(InputArray, CMDArray, GrayscaleArray);
+		}
+
+		InputCounter = 0;
+
+		GPIOA->MODER |= (1<<13);	// Set back to AF (TIM)
+		GPIOA->MODER &= ~(1<<12);
+
+		HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+		__enable_irq();
+	}
+
   }
   /* USER CODE END 3 */
 }
@@ -217,6 +345,43 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief SPI1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI1_Init(void)
+{
+
+  /* USER CODE BEGIN SPI1_Init 0 */
+
+  /* USER CODE END SPI1_Init 0 */
+
+  /* USER CODE BEGIN SPI1_Init 1 */
+
+  /* USER CODE END SPI1_Init 1 */
+  /* SPI1 parameter configuration*/
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_SLAVE;
+  hspi1.Init.Direction = SPI_DIRECTION_1LINE;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI1_Init 2 */
+
+  /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
   * @brief TIM3 Initialization Function
   * @param None
   * @retval None
@@ -238,7 +403,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = period_clk;
+  htim3.Init.Period = 100;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -298,7 +463,7 @@ static void MX_TIM8_Init(void)
   htim8.Instance = TIM8;
   htim8.Init.Prescaler = 0;
   htim8.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim8.Init.Period = period_data;
+  htim8.Init.Period = 100;
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim8.Init.RepetitionCounter = 0;
   htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
@@ -362,7 +527,7 @@ static void MX_DMA_Init(void)
 
   /* Configure DMA request hdma_memtomem_dma2_stream1 on DMA2_Stream1 */
   hdma_memtomem_dma2_stream1.Instance = DMA2_Stream1;
-  hdma_memtomem_dma2_stream1.Init.Channel = DMA_CHANNEL_7;
+  hdma_memtomem_dma2_stream1.Init.Channel = DMA_CHANNEL_0;
   hdma_memtomem_dma2_stream1.Init.Direction = DMA_MEMORY_TO_MEMORY;
   hdma_memtomem_dma2_stream1.Init.PeriphInc = DMA_PINC_DISABLE;
   hdma_memtomem_dma2_stream1.Init.MemInc = DMA_MINC_DISABLE;
@@ -394,6 +559,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
@@ -417,6 +583,17 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void uS_Delay(int delay)
+{
+	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+	DWT->CYCCNT = 0;
+	DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+	while ((DWT->CYCCNT) < delay)
+	{
+		;
+	}
+}
 
 /* USER CODE END 4 */
 
